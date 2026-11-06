@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Events - Event Management System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1>Event Management System</h1>
+            <nav>
+                <span id="welcomeUser">Welcome, User!</span>
+                <a href="index.html" class="logout-btn">Logout</a>
+            </nav>
+        </div>
+    </header>
+    
+    <main class="main-content">
+        <div class="container">
+            <div class="page-header">
+                <h2>Upcoming Events</h2>
+                <p>Discover and register for exciting events</p>
+            </div>
+            
+            <div id="eventsContainer" class="events-grid">
+                <!-- Events will be loaded dynamically -->
+                <div class="loading">Loading events...</div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Registration Modal -->
+    <div id="registrationModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Register for Event</h2>
+            <form id="registrationForm" action="register" method="POST">
+                <input type="hidden" id="eventId" name="eventId">
+                
+                <div class="form-group">
+                    <label for="userName">Full Name:</label>
+                    <input type="text" id="userName" name="userName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="phone">Phone Number:</label>
+                    <input type="tel" id="phone" name="phone" required>
+                </div>
+                
+                <button type="submit" class="register-btn">Register</button>
+            </form>
+        </div>
+    </div>
+    <form id="registrationForm" action="register" method="POST">
+
+    
+    <script>
+        // Load events on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadEvents();
+            setupModal();
+        });
+        
+        function loadEvents() {
+            fetch('/event-management/events')
+                .then(response => response.json())
+                .then(events => {
+                    displayEvents(events);
+                })
+                .catch(error => {
+                    console.error('Error loading events:', error);
+                    document.getElementById('eventsContainer').innerHTML = 
+                        '<div class="error">Error loading events. Please try again later.</div>';
+                });
+        }
+        
+        function displayEvents(events) {
+            const container = document.getElementById('eventsContainer');
+            
+            if (events.length === 0) {
+                container.innerHTML = '<div class="no-events">No events available at the moment.</div>';
+                return;
+            }
+            
+            container.innerHTML = events.map(event => `
+                <div class="event-card">
+                    <div class="event-header">
+                        <h3>${event.name}</h3>
+                        <span class="event-date">${formatDate(event.date)}</span>
+                    </div>
+                    <div class="event-details">
+                        <p class="event-venue">📍 ${event.venue}</p>
+                        <p class="event-description">${event.description}</p>
+                    </div>
+                    <button class="register-btn" onclick="openRegistrationModal(${event.eventId})">
+                        Register Now
+                    </button>
+                </div>
+            `).join('');
+        }
+        
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+        
+        function openRegistrationModal(eventId) {
+            document.getElementById('eventId').value = eventId;
+            document.getElementById('registrationModal').style.display = 'block';
+        }
+        
+        function setupModal() {
+            const modal = document.getElementById('registrationModal');
+            const closeBtn = document.querySelector('.close');
+            
+            closeBtn.onclick = function() {
+                modal.style.display = 'none';
+            }
+            
+            window.onclick = function(event) {
+                if (event.target == modal) {
+                    modal.style.display = 'none';
+                }
+            }
+        }
+        
+        // Handle registration form submission
+        // document.getElementById('registrationForm').addEventListener('submit', function(e) {
+        //     e.preventDefault();
+            
+        //     const formData = new FormData(this);
+            
+        //     fetch('/register', {
+        //         method: 'POST',
+        //         body: formData
+        //     })
+        //     .then(response => response.text())
+        //     .then(data => {
+        //         // The servlet returns HTML with script tags, so we need to execute it
+        //         const tempDiv = document.createElement('div');
+        //         tempDiv.innerHTML = data;
+        //         const script = tempDiv.querySelector('script');
+        //         if (script) {
+        //             eval(script.textContent);
+        //         }
+        //     })
+        //     .catch(error => {
+        //         console.error('Error registering:', error);
+        //         alert('Error registering for event. Please try again.');
+        //     });
+        // });
+    </script>
+</body>
+</html>

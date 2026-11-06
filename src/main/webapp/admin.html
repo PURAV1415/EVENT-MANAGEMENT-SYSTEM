@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Event Manager</title>
+    <link rel="stylesheet" href="css/style.css">
+    
+</head>
+
+<body>
+
+<h1>Event Dashboard (Admin)</h1>
+
+<button class="btn" onclick="openAddModal()">Add Event</button>
+<button class="btn" onclick="openRegistrationModal()">View Registrations</button>
+
+<!-- EVENTS TABLE -->
+<table id="eventsTable">
+    <thead>
+        <tr>
+            <th>ID</th><th>Name</th><th>Date</th><th>Venue</th><th>Description</th><th>Actions</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<!-- REGISTRATION MODAL -->
+<div id="registrationModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeRegistrationModal()">&times;</span>
+        <h2>All Registrations</h2>
+
+        <table id="registrationTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>User Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Event ID</th>
+                    <th>Registered At</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- EVENT MODAL -->
+<form id="eventForm" action="events" method="POST">
+<div id="eventModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h2 id="modalTitle">Add New Event</h2>
+
+        <input type="hidden" id="action" name="action" value="add">
+        <input type="hidden" id="eventId" name="eventId">
+
+        <div class="form-group">
+            <label>Event Name</label>
+            <input type="text" id="eventName" name="name" required>
+        </div>
+
+        <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="eventDate" name="date" required>
+        </div>
+
+        <div class="form-group">
+            <label>Venue</label>
+            <input type="text" id="eventVenue" name="venue" required>
+        </div>
+
+        <div class="form-group">
+            <label>Description</label>
+            <textarea id="eventDescription" name="description"></textarea>
+        </div>
+
+        <button type="submit" class="save-btn">Save Event</button>
+    </div>
+</div>
+</form>
+
+<!-- ALL JAVASCRIPT (FIXED) -->
+<script>
+
+// INITIAL LOAD
+loadEvents();
+
+/* ------------ EVENTS CRUD ------------- */
+
+function loadEvents() {
+    fetch("events")
+        .then(res => res.json())
+        .then(data => {
+            let rows = "";
+            data.forEach(e => {
+                rows += `
+                <tr>
+                    <td>${e.eventId}</td>
+                    <td>${e.name}</td>
+                    <td>${e.date}</td>
+                    <td>${e.venue}</td>
+                    <td>${e.description}</td>
+                    <td>
+                        <button onclick="openEditModal(${e.eventId}, '${e.name}', '${e.date}', '${e.venue}', '${e.description}')">Edit</button>
+                        <button onclick="deleteEvent(${e.eventId})">Delete</button>
+                    </td>
+                </tr>`;
+            });
+
+            document.querySelector("#eventsTable tbody").innerHTML = rows;
+        });
+}
+
+function openAddModal() {
+    document.getElementById("modalTitle").innerText = "Add Event";
+    document.getElementById("action").value = "add";
+    document.getElementById("eventId").value = "";
+
+    document.getElementById("eventName").value = "";
+    document.getElementById("eventDate").value = "";
+    document.getElementById("eventVenue").value = "";
+    document.getElementById("eventDescription").value = "";
+
+    document.getElementById("eventModal").style.display = "block";
+}
+
+function openEditModal(id, name, date, venue, desc) {
+    document.getElementById("modalTitle").innerText = "Edit Event";
+    document.getElementById("action").value = "update";
+    document.getElementById("eventId").value = id;
+
+    document.getElementById("eventName").value = name;
+    document.getElementById("eventDate").value = date;
+    document.getElementById("eventVenue").value = venue;
+    document.getElementById("eventDescription").value = desc;
+
+    document.getElementById("eventModal").style.display = "block";
+}
+
+function closeModal() {
+    document.getElementById("eventModal").style.display = "none";
+}
+
+function deleteEvent(id) {
+    fetch("events", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `action=delete&eventId=${id}`
+    })
+    .then(res => res.json())
+    .then(data => {
+        alert(data.status);
+        loadEvents();
+    });
+}
+
+// SAVE EVENT
+document.getElementById("eventForm").addEventListener("submit", function(event) {
+    event.preventDefault();
+    let formData = new FormData(this);
+
+    fetch("events", {
+        method: "POST",
+        body: new URLSearchParams(formData)
+    })
+    .then(res => res.json())
+    .then(data => {
+        alert(data.status);
+        closeModal();
+        loadEvents();
+    });
+});
+
+/* ------------ REGISTRATION VIEW ------------- */
+
+function openRegistrationModal() {
+    document.getElementById("registrationModal").style.display = "block";
+    loadRegistrations();
+}
+
+function closeRegistrationModal() {
+    document.getElementById("registrationModal").style.display = "none";
+}
+
+function loadRegistrations() {
+    fetch("registration-data")
+        .then(res => res.json())
+        .then(data => {
+            let rows = "";
+            data.forEach(r => {
+                rows += `
+                    <tr>
+                        <td>${r.regId}</td>
+                        <td>${r.userName}</td>
+                        <td>${r.email}</td>
+                        <td>${r.phone}</td>
+                        <td>${r.eventId}</td>
+                        <td>${r.registeredAt}</td>
+                    </tr>`;
+            });
+            document.querySelector("#registrationTable tbody").innerHTML = rows;
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Failed to load registrations");
+        });
+}
+
+</script>
+
+</body>
+</html>
